@@ -5,3 +5,6 @@ target
 .windsurf
 .mvn\wrapper\maven-wrapper.jar
 *.log
+.gitignore
+*.md
+docker-compose*.yml
