@@ -1,5 +1,7 @@
 package com.example.franchiseapi.controller;
 
+import com.example.franchiseapi.application.FranchiseReadUseCase;
+import com.example.franchiseapi.application.FranchiseWriteUseCase;
 import com.example.franchiseapi.dto.ApiResponse;
 import com.example.franchiseapi.dto.BranchResponse;
 import com.example.franchiseapi.dto.CreateBranchRequest;
@@ -10,8 +12,6 @@ import com.example.franchiseapi.dto.ProductResponse;
 import com.example.franchiseapi.dto.TopProductResponse;
 import com.example.franchiseapi.dto.UpdateNameRequest;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
-import com.example.franchiseapi.service.FranchiseReadService;
-import com.example.franchiseapi.service.FranchiseWriteService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -30,22 +30,22 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/franchises")
 public class FranchiseController {
 
-    private final FranchiseReadService franchiseReadService;
-    private final FranchiseWriteService franchiseWriteService;
+    private final FranchiseReadUseCase franchiseReadUseCase;
+    private final FranchiseWriteUseCase franchiseWriteUseCase;
 
     public FranchiseController(
-            FranchiseReadService franchiseReadService,
-            FranchiseWriteService franchiseWriteService
+            FranchiseReadUseCase franchiseReadUseCase,
+            FranchiseWriteUseCase franchiseWriteUseCase
     ) {
-        this.franchiseReadService = franchiseReadService;
-        this.franchiseWriteService = franchiseWriteService;
+        this.franchiseReadUseCase = franchiseReadUseCase;
+        this.franchiseWriteUseCase = franchiseWriteUseCase;
     }
 
     @PostMapping
     public Mono<ResponseEntity<ApiResponse<FranchiseResponse>>> createFranchise(
             @Valid @RequestBody CreateFranchiseRequest request
     ) {
-        return franchiseWriteService.createFranchise(request)
+        return franchiseWriteUseCase.createFranchise(request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success("Franchise created successfully", response)));
     }
@@ -55,7 +55,7 @@ public class FranchiseController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateNameRequest request
     ) {
-        return franchiseWriteService.updateFranchiseName(id, request)
+        return franchiseWriteUseCase.updateFranchiseName(id, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Franchise name updated successfully", response)));
     }
 
@@ -64,7 +64,7 @@ public class FranchiseController {
             @PathVariable Long id,
             @Valid @RequestBody CreateBranchRequest request
     ) {
-        return franchiseWriteService.createBranch(id, request)
+        return franchiseWriteUseCase.createBranch(id, request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success("Branch created successfully", response)));
     }
@@ -75,7 +75,7 @@ public class FranchiseController {
             @PathVariable Long branchId,
             @Valid @RequestBody UpdateNameRequest request
     ) {
-        return franchiseWriteService.updateBranchName(id, branchId, request)
+        return franchiseWriteUseCase.updateBranchName(id, branchId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Branch name updated successfully", response)));
     }
 
@@ -85,7 +85,7 @@ public class FranchiseController {
             @PathVariable Long branchId,
             @Valid @RequestBody CreateProductRequest request
     ) {
-        return franchiseWriteService.createProduct(id, branchId, request)
+        return franchiseWriteUseCase.createProduct(id, branchId, request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success("Product created successfully", response)));
     }
@@ -96,7 +96,7 @@ public class FranchiseController {
             @PathVariable Long branchId,
             @PathVariable Long productId
     ) {
-        return franchiseWriteService.deleteProduct(id, branchId, productId)
+        return franchiseWriteUseCase.deleteProduct(id, branchId, productId)
                 .thenReturn(ResponseEntity.ok(ApiResponse.<Void>success("Product deleted successfully", null)));
     }
 
@@ -107,7 +107,7 @@ public class FranchiseController {
             @PathVariable Long productId,
             @Valid @RequestBody UpdateProductStockRequest request
     ) {
-        return franchiseWriteService.updateProductStock(id, branchId, productId, request)
+        return franchiseWriteUseCase.updateProductStock(id, branchId, productId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Product stock updated successfully", response)));
     }
 
@@ -118,13 +118,13 @@ public class FranchiseController {
             @PathVariable Long productId,
             @Valid @RequestBody UpdateNameRequest request
     ) {
-        return franchiseWriteService.updateProductName(id, branchId, productId, request)
+        return franchiseWriteUseCase.updateProductName(id, branchId, productId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Product name updated successfully", response)));
     }
 
     @GetMapping("/{id}/top-products")
     public Mono<ResponseEntity<ApiResponse<List<TopProductResponse>>>> getTopProducts(@PathVariable Long id) {
-        return franchiseReadService.getTopProducts(id)
+        return franchiseReadUseCase.getTopProducts(id)
                 .collectList()
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Top products retrieved successfully", response)));
     }

@@ -5,15 +5,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.example.franchiseapi.application.BranchPersistencePort;
+import com.example.franchiseapi.application.FranchisePersistencePort;
+import com.example.franchiseapi.application.ProductPersistencePort;
 import com.example.franchiseapi.dto.CreateFranchiseRequest;
 import com.example.franchiseapi.dto.CreateProductRequest;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
 import com.example.franchiseapi.model.Branch;
 import com.example.franchiseapi.model.Franchise;
 import com.example.franchiseapi.model.Product;
-import com.example.franchiseapi.repository.BranchRepository;
-import com.example.franchiseapi.repository.FranchiseRepository;
-import com.example.franchiseapi.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,13 +30,13 @@ import reactor.test.StepVerifier;
 class FranchiseWriteServiceTest {
 
     @Mock
-    private FranchiseRepository franchiseRepository;
+    private FranchisePersistencePort franchisePersistencePort;
 
     @Mock
-    private BranchRepository branchRepository;
+    private BranchPersistencePort branchPersistencePort;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductPersistencePort productPersistencePort;
 
     @InjectMocks
     private FranchiseWriteService franchiseWriteService;
@@ -68,7 +68,7 @@ class FranchiseWriteServiceTest {
 
     @Test
     void createFranchiseShouldTrimNameAndReturnResponse() {
-        when(franchiseRepository.save(any(Franchise.class))).thenAnswer(invocation -> {
+        when(franchisePersistencePort.save(any(Franchise.class))).thenAnswer(invocation -> {
             Franchise franchiseToSave = invocation.getArgument(0);
             franchiseToSave.setId(1L);
             return Mono.just(franchiseToSave);
@@ -82,14 +82,14 @@ class FranchiseWriteServiceTest {
                 .verifyComplete();
 
         ArgumentCaptor<Franchise> captor = ArgumentCaptor.forClass(Franchise.class);
-        verify(franchiseRepository).save(captor.capture());
+        verify(franchisePersistencePort).save(captor.capture());
         assertEquals("Franquicia Demo", captor.getValue().getNombre());
     }
 
     @Test
     void createProductShouldReturnNotFoundWhenBranchDoesNotExist() {
-        when(franchiseRepository.findById(1L)).thenReturn(Mono.just(franchise));
-        when(branchRepository.findByIdAndFranchiseId(99L, 1L)).thenReturn(Mono.empty());
+        when(franchisePersistencePort.findById(1L)).thenReturn(Mono.just(franchise));
+        when(branchPersistencePort.findByIdAndFranchiseId(99L, 1L)).thenReturn(Mono.empty());
 
         StepVerifier.create(franchiseWriteService.createProduct(1L, 99L, new CreateProductRequest("Mouse", 5)))
                 .expectErrorSatisfies(error -> {
@@ -102,10 +102,10 @@ class FranchiseWriteServiceTest {
 
     @Test
     void updateProductStockShouldUpdateExistingProductStock() {
-        when(franchiseRepository.findById(1L)).thenReturn(Mono.just(franchise));
-        when(branchRepository.findByIdAndFranchiseId(2L, 1L)).thenReturn(Mono.just(branch));
-        when(productRepository.findByIdAndBranchId(3L, 2L)).thenReturn(Mono.just(product));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(franchisePersistencePort.findById(1L)).thenReturn(Mono.just(franchise));
+        when(branchPersistencePort.findByIdAndFranchiseId(2L, 1L)).thenReturn(Mono.just(branch));
+        when(productPersistencePort.findByIdAndBranchId(3L, 2L)).thenReturn(Mono.just(product));
+        when(productPersistencePort.save(any(Product.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
 
         StepVerifier.create(franchiseWriteService.updateProductStock(1L, 2L, 3L, new UpdateProductStockRequest(25)))
                 .assertNext(response -> {
@@ -116,15 +116,15 @@ class FranchiseWriteServiceTest {
                 .verifyComplete();
 
         ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
-        verify(productRepository).save(captor.capture());
+        verify(productPersistencePort).save(captor.capture());
         assertEquals(25, captor.getValue().getStock());
     }
 
     @Test
     void deleteProductShouldReturnNotFoundWhenProductDoesNotExist() {
-        when(franchiseRepository.findById(1L)).thenReturn(Mono.just(franchise));
-        when(branchRepository.findByIdAndFranchiseId(2L, 1L)).thenReturn(Mono.just(branch));
-        when(productRepository.findByIdAndBranchId(3L, 2L)).thenReturn(Mono.empty());
+        when(franchisePersistencePort.findById(1L)).thenReturn(Mono.just(franchise));
+        when(branchPersistencePort.findByIdAndFranchiseId(2L, 1L)).thenReturn(Mono.just(branch));
+        when(productPersistencePort.findByIdAndBranchId(3L, 2L)).thenReturn(Mono.empty());
 
         StepVerifier.create(franchiseWriteService.deleteProduct(1L, 2L, 3L))
                 .expectErrorSatisfies(error -> {

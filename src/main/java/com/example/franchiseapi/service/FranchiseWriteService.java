@@ -1,5 +1,9 @@
 package com.example.franchiseapi.service;
 
+import com.example.franchiseapi.application.BranchPersistencePort;
+import com.example.franchiseapi.application.FranchisePersistencePort;
+import com.example.franchiseapi.application.FranchiseWriteUseCase;
+import com.example.franchiseapi.application.ProductPersistencePort;
 import com.example.franchiseapi.dto.BranchResponse;
 import com.example.franchiseapi.dto.CreateBranchRequest;
 import com.example.franchiseapi.dto.CreateFranchiseRequest;
@@ -8,69 +12,72 @@ import com.example.franchiseapi.dto.FranchiseResponse;
 import com.example.franchiseapi.dto.ProductResponse;
 import com.example.franchiseapi.dto.UpdateNameRequest;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
+import com.example.franchiseapi.mapper.FranchiseMapper;
 import com.example.franchiseapi.model.Branch;
 import com.example.franchiseapi.model.Franchise;
 import com.example.franchiseapi.model.Product;
-import com.example.franchiseapi.repository.BranchRepository;
-import com.example.franchiseapi.repository.FranchiseRepository;
-import com.example.franchiseapi.repository.ProductRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 @Service
-public class FranchiseWriteService {
+public class FranchiseWriteService implements FranchiseWriteUseCase {
 
-    private final FranchiseRepository franchiseRepository;
-    private final BranchRepository branchRepository;
-    private final ProductRepository productRepository;
+    private final FranchisePersistencePort franchisePersistencePort;
+    private final BranchPersistencePort branchPersistencePort;
+    private final ProductPersistencePort productPersistencePort;
 
     public FranchiseWriteService(
-            FranchiseRepository franchiseRepository,
-            BranchRepository branchRepository,
-            ProductRepository productRepository
+            FranchisePersistencePort franchisePersistencePort,
+            BranchPersistencePort branchPersistencePort,
+            ProductPersistencePort productPersistencePort
     ) {
-        this.franchiseRepository = franchiseRepository;
-        this.branchRepository = branchRepository;
-        this.productRepository = productRepository;
+        this.franchisePersistencePort = franchisePersistencePort;
+        this.branchPersistencePort = branchPersistencePort;
+        this.productPersistencePort = productPersistencePort;
     }
 
+    @Override
     public Mono<FranchiseResponse> createFranchise(CreateFranchiseRequest request) {
         Franchise franchise = Franchise.builder()
                 .nombre(request.nombre().trim())
                 .build();
 
-        return franchiseRepository.save(franchise)
-                .map(saved -> new FranchiseResponse(saved.getId(), saved.getNombre()));
+        return franchisePersistencePort.save(franchise)
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<BranchResponse> createBranch(Long franchiseId, CreateBranchRequest request) {
         return requireFranchise(franchiseId)
-                .flatMap(franchise -> branchRepository.save(Branch.builder()
+                .flatMap(franchise -> branchPersistencePort.save(Branch.builder()
                         .nombre(request.nombre().trim())
                         .franchiseId(franchise.getId())
                         .build()))
-                .map(saved -> new BranchResponse(saved.getId(), saved.getNombre(), saved.getFranchiseId()));
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<ProductResponse> createProduct(Long franchiseId, Long branchId, CreateProductRequest request) {
         return requireBranch(franchiseId, branchId)
-                .flatMap(branch -> productRepository.save(Product.builder()
+                .flatMap(branch -> productPersistencePort.save(Product.builder()
                         .nombre(request.nombre().trim())
                         .stock(request.stock())
                         .branchId(branch.getId())
                         .build()))
-                .map(saved -> new ProductResponse(saved.getId(), saved.getNombre(), saved.getStock(), saved.getBranchId()));
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<Void> deleteProduct(Long franchiseId, Long branchId, Long productId) {
         return requireBranch(franchiseId, branchId)
-                .flatMap(branch -> productRepository.findByIdAndBranchId(productId, branch.getId())
+                .flatMap(branch -> productPersistencePort.findByIdAndBranchId(productId, branch.getId())
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"))))
-                .flatMap(productRepository::delete);
+                .flatMap(productPersistencePort::delete);
     }
 
+    @Override
     public Mono<ProductResponse> updateProductStock(
             Long franchiseId,
             Long branchId,
@@ -78,52 +85,55 @@ public class FranchiseWriteService {
             UpdateProductStockRequest request
     ) {
         return requireBranch(franchiseId, branchId)
-                .flatMap(branch -> productRepository.findByIdAndBranchId(productId, branch.getId())
+                .flatMap(branch -> productPersistencePort.findByIdAndBranchId(productId, branch.getId())
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"))))
                 .flatMap(product -> {
                     product.setStock(request.stock());
-                    return productRepository.save(product);
+                    return productPersistencePort.save(product);
                 })
-                .map(saved -> new ProductResponse(saved.getId(), saved.getNombre(), saved.getStock(), saved.getBranchId()));
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<FranchiseResponse> updateFranchiseName(Long franchiseId, UpdateNameRequest request) {
         return requireFranchise(franchiseId)
                 .flatMap(franchise -> {
                     franchise.setNombre(request.nombre().trim());
-                    return franchiseRepository.save(franchise);
+                    return franchisePersistencePort.save(franchise);
                 })
-                .map(saved -> new FranchiseResponse(saved.getId(), saved.getNombre()));
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<BranchResponse> updateBranchName(Long franchiseId, Long branchId, UpdateNameRequest request) {
         return requireBranch(franchiseId, branchId)
                 .flatMap(branch -> {
                     branch.setNombre(request.nombre().trim());
-                    return branchRepository.save(branch);
+                    return branchPersistencePort.save(branch);
                 })
-                .map(saved -> new BranchResponse(saved.getId(), saved.getNombre(), saved.getFranchiseId()));
+                .map(FranchiseMapper::toResponse);
     }
 
+    @Override
     public Mono<ProductResponse> updateProductName(Long franchiseId, Long branchId, Long productId, UpdateNameRequest request) {
         return requireBranch(franchiseId, branchId)
-                .flatMap(branch -> productRepository.findByIdAndBranchId(productId, branch.getId())
+                .flatMap(branch -> productPersistencePort.findByIdAndBranchId(productId, branch.getId())
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"))))
                 .flatMap(product -> {
                     product.setNombre(request.nombre().trim());
-                    return productRepository.save(product);
+                    return productPersistencePort.save(product);
                 })
-                .map(saved -> new ProductResponse(saved.getId(), saved.getNombre(), saved.getStock(), saved.getBranchId()));
+                .map(FranchiseMapper::toResponse);
     }
 
     private Mono<Franchise> requireFranchise(Long franchiseId) {
-        return franchiseRepository.findById(franchiseId)
+        return franchisePersistencePort.findById(franchiseId)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Franchise not found")));
     }
 
     private Mono<Branch> requireBranch(Long franchiseId, Long branchId) {
         return requireFranchise(franchiseId)
-                .flatMap(franchise -> branchRepository.findByIdAndFranchiseId(branchId, franchise.getId())
+                .flatMap(franchise -> branchPersistencePort.findByIdAndFranchiseId(branchId, franchise.getId())
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Branch not found"))));
     }
 }
