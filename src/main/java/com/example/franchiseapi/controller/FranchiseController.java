@@ -7,12 +7,16 @@ import com.example.franchiseapi.dto.CreateFranchiseRequest;
 import com.example.franchiseapi.dto.CreateProductRequest;
 import com.example.franchiseapi.dto.FranchiseResponse;
 import com.example.franchiseapi.dto.ProductResponse;
+import com.example.franchiseapi.dto.TopProductResponse;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
+import com.example.franchiseapi.service.FranchiseReadService;
 import com.example.franchiseapi.service.FranchiseWriteService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,9 +29,14 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/franchises")
 public class FranchiseController {
 
+    private final FranchiseReadService franchiseReadService;
     private final FranchiseWriteService franchiseWriteService;
 
-    public FranchiseController(FranchiseWriteService franchiseWriteService) {
+    public FranchiseController(
+            FranchiseReadService franchiseReadService,
+            FranchiseWriteService franchiseWriteService
+    ) {
+        this.franchiseReadService = franchiseReadService;
         this.franchiseWriteService = franchiseWriteService;
     }
 
@@ -80,5 +89,12 @@ public class FranchiseController {
     ) {
         return franchiseWriteService.updateProductStock(id, branchId, productId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Product stock updated successfully", response)));
+    }
+
+    @GetMapping("/{id}/top-products")
+    public Mono<ResponseEntity<ApiResponse<List<TopProductResponse>>>> getTopProducts(@PathVariable Long id) {
+        return franchiseReadService.getTopProducts(id)
+                .collectList()
+                .map(response -> ResponseEntity.ok(ApiResponse.success("Top products retrieved successfully", response)));
     }
 }
