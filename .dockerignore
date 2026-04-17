@@ -2,7 +2,7 @@
 .idea
 .vscode
 .windsurf
-.mvn\wrapper\maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.jar
 *.log
 .gitignore
 *.md
