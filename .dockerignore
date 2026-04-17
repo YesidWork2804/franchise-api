@@ -1,0 +1,7 @@
+target
+.git
+.idea
+.vscode
+.windsurf
+.mvn\wrapper\maven-wrapper.jar
+*.log
