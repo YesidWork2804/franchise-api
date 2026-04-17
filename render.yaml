@@ -1,12 +1,10 @@
 services:
   - type: web
     name: franchise-api
-    runtime: java
+    runtime: docker
     plan: free
     branch: master
     autoDeploy: true
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -Xms128m -Xmx384m -jar target/franchise-api-0.0.1-SNAPSHOT.jar
     healthCheckPath: /actuator/health
     envVars:
       - key: DB_URL
