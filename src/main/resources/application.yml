@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: franchise-api
+  r2dbc:
+    url: ${DB_URL:r2dbc:postgresql://db.vehadvbrxuiysspufvju.supabase.co:5432/postgres?sslMode=require}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+
+server:
+  error:
+    include-message: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
