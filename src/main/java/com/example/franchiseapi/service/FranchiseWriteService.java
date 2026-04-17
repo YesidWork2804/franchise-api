@@ -6,6 +6,7 @@ import com.example.franchiseapi.dto.CreateFranchiseRequest;
 import com.example.franchiseapi.dto.CreateProductRequest;
 import com.example.franchiseapi.dto.FranchiseResponse;
 import com.example.franchiseapi.dto.ProductResponse;
+import com.example.franchiseapi.dto.UpdateNameRequest;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
 import com.example.franchiseapi.model.Branch;
 import com.example.franchiseapi.model.Franchise;
@@ -81,6 +82,35 @@ public class FranchiseWriteService {
                         .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"))))
                 .flatMap(product -> {
                     product.setStock(request.stock());
+                    return productRepository.save(product);
+                })
+                .map(saved -> new ProductResponse(saved.getId(), saved.getNombre(), saved.getStock(), saved.getBranchId()));
+    }
+
+    public Mono<FranchiseResponse> updateFranchiseName(Long franchiseId, UpdateNameRequest request) {
+        return requireFranchise(franchiseId)
+                .flatMap(franchise -> {
+                    franchise.setNombre(request.nombre().trim());
+                    return franchiseRepository.save(franchise);
+                })
+                .map(saved -> new FranchiseResponse(saved.getId(), saved.getNombre()));
+    }
+
+    public Mono<BranchResponse> updateBranchName(Long franchiseId, Long branchId, UpdateNameRequest request) {
+        return requireBranch(franchiseId, branchId)
+                .flatMap(branch -> {
+                    branch.setNombre(request.nombre().trim());
+                    return branchRepository.save(branch);
+                })
+                .map(saved -> new BranchResponse(saved.getId(), saved.getNombre(), saved.getFranchiseId()));
+    }
+
+    public Mono<ProductResponse> updateProductName(Long franchiseId, Long branchId, Long productId, UpdateNameRequest request) {
+        return requireBranch(franchiseId, branchId)
+                .flatMap(branch -> productRepository.findByIdAndBranchId(productId, branch.getId())
+                        .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"))))
+                .flatMap(product -> {
+                    product.setNombre(request.nombre().trim());
                     return productRepository.save(product);
                 })
                 .map(saved -> new ProductResponse(saved.getId(), saved.getNombre(), saved.getStock(), saved.getBranchId()));

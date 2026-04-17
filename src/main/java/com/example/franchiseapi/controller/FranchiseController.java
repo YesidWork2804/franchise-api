@@ -8,6 +8,7 @@ import com.example.franchiseapi.dto.CreateProductRequest;
 import com.example.franchiseapi.dto.FranchiseResponse;
 import com.example.franchiseapi.dto.ProductResponse;
 import com.example.franchiseapi.dto.TopProductResponse;
+import com.example.franchiseapi.dto.UpdateNameRequest;
 import com.example.franchiseapi.dto.UpdateProductStockRequest;
 import com.example.franchiseapi.service.FranchiseReadService;
 import com.example.franchiseapi.service.FranchiseWriteService;
@@ -49,6 +50,15 @@ public class FranchiseController {
                         .body(ApiResponse.success("Franchise created successfully", response)));
     }
 
+    @PatchMapping("/{id}")
+    public Mono<ResponseEntity<ApiResponse<FranchiseResponse>>> updateFranchiseName(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateNameRequest request
+    ) {
+        return franchiseWriteService.updateFranchiseName(id, request)
+                .map(response -> ResponseEntity.ok(ApiResponse.success("Franchise name updated successfully", response)));
+    }
+
     @PostMapping("/{id}/branches")
     public Mono<ResponseEntity<ApiResponse<BranchResponse>>> createBranch(
             @PathVariable Long id,
@@ -57,6 +67,16 @@ public class FranchiseController {
         return franchiseWriteService.createBranch(id, request)
                 .map(response -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success("Branch created successfully", response)));
+    }
+
+    @PatchMapping("/{id}/branches/{branchId}")
+    public Mono<ResponseEntity<ApiResponse<BranchResponse>>> updateBranchName(
+            @PathVariable Long id,
+            @PathVariable Long branchId,
+            @Valid @RequestBody UpdateNameRequest request
+    ) {
+        return franchiseWriteService.updateBranchName(id, branchId, request)
+                .map(response -> ResponseEntity.ok(ApiResponse.success("Branch name updated successfully", response)));
     }
 
     @PostMapping("/{id}/branches/{branchId}/products")
@@ -89,6 +109,17 @@ public class FranchiseController {
     ) {
         return franchiseWriteService.updateProductStock(id, branchId, productId, request)
                 .map(response -> ResponseEntity.ok(ApiResponse.success("Product stock updated successfully", response)));
+    }
+
+    @PatchMapping("/{id}/branches/{branchId}/products/{productId}")
+    public Mono<ResponseEntity<ApiResponse<ProductResponse>>> updateProductName(
+            @PathVariable Long id,
+            @PathVariable Long branchId,
+            @PathVariable Long productId,
+            @Valid @RequestBody UpdateNameRequest request
+    ) {
+        return franchiseWriteService.updateProductName(id, branchId, productId, request)
+                .map(response -> ResponseEntity.ok(ApiResponse.success("Product name updated successfully", response)));
     }
 
     @GetMapping("/{id}/top-products")
