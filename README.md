@@ -86,30 +86,35 @@ https://franchise-api-oj4r.onrender.com/actuator/health
 | PATCH | `/api/franchises/{id}/branches/{branchId}/products/{productId}` | Actualizar nombre de producto |
 | GET | `/api/franchises/{id}/top-products` | Obtener producto con mayor stock por sucursal |
 
-## 🧪 Ejemplos rápidos
+## 🧪 Probar la API
 
-Estos comandos se ejecutan en la consola.
+Usa herramientas como **Postman**, **Insomnia**, **Thunder Client** (extensión de VS Code) o el navegador para probar los endpoints.
 
-### Crear franquicia
+Para pruebas locales usa `http://localhost:8081` y para el despliegue usa `https://franchise-api-oj4r.onrender.com`.
 
-```bash
-curl -X POST http://localhost:8081/api/franchises \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Franquicia Demo"}'
+### Ejemplo: Crear franquicia
+
+**Método:** POST  
+**URL:** `/api/franchises`  
+**Body (JSON):**
+```json
+{
+  "nombre": "Franquicia Demo"
+}
 ```
 
-### Actualizar stock
-
-```bash
-curl -X PATCH http://localhost:8081/api/franchises/1/branches/1/products/1/stock \
-  -H "Content-Type: application/json" \
-  -d '{"stock":25}'
-```
-
-### Obtener top products
-
-```bash
-curl http://localhost:8081/api/franchises/1/top-products
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "message": "Franchise created successfully",
+  "data": {
+    "id": 1,
+    "nombre": "Franquicia Demo"
+  },
+  "errors": [],
+  "timestamp": "2026-04-18T14:05:00Z"
+}
 ```
 
 ## 🧱 Arquitectura
