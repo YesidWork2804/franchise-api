@@ -36,6 +36,10 @@ PORT=8080
 
 ## ▶️ Ejecutar local
 
+### Configurar base de datos
+
+Usa las variables de entorno de Supabase o configura una BD local PostgreSQL.
+
 ### Con Maven
 
 ```bash
@@ -84,12 +88,14 @@ https://franchise-api-oj4r.onrender.com/actuator/health
 
 ## 🧪 Ejemplos rápidos
 
+Estos comandos se ejecutan en la consola.
+
 ### Crear franquicia
 
 ```bash
 curl -X POST http://localhost:8081/api/franchises \
   -H "Content-Type: application/json" \
-  -d '{"name":"Franquicia Demo"}'
+  -d '{"nombre":"Franquicia Demo"}'
 ```
 
 ### Actualizar stock
@@ -99,6 +105,38 @@ curl -X PATCH http://localhost:8081/api/franchises/1/branches/1/products/1/stock
   -H "Content-Type: application/json" \
   -d '{"stock":25}'
 ```
+
+### Obtener top products
+
+```bash
+curl http://localhost:8081/api/franchises/1/top-products
+```
+
+## 🧱 Arquitectura
+
+El proyecto usa una **Clean Architecture ligera** adaptada al tamaño de la prueba.
+
+- `controller/` expone la API HTTP
+- `application/` define casos de uso y puertos
+- `service/` implementa la lógica de negocio
+- `infrastructure/persistence/` implementa el acceso a datos
+- `dto/`, `mapper/`, `exception/` y `model/` apoyan la comunicación y organización interna
+
+Esto permite desacoplar la lógica de negocio de la tecnología de persistencia.
+
+## ✅ Pruebas unitarias
+
+El proyecto incluye pruebas unitarias para la lógica de negocio en:
+
+- `src/test/java/com/example/franchiseapi/service/FranchiseWriteServiceTest.java`
+
+Para ejecutarlas:
+
+```bash
+./mvnw test
+```
+
+Se validan casos felices y errores de negocio usando **Mockito** y **StepVerifier**.
 
 ## 🛠️ Infraestructura como código
 
@@ -130,6 +168,12 @@ terraform apply
 
 La persistencia usa **Supabase PostgreSQL** con conexión reactiva vía **R2DBC**.
 
+### Esquema
+
+- `franchise`: id, nombre
+- `branch`: id, nombre, franchise_id
+- `product`: id, nombre, stock, branch_id
+
 ## 🐳 Docker
 
 El proyecto incluye:
@@ -139,9 +183,27 @@ El proyecto incluye:
 
 Para despliegue en Render se usa imagen Docker con `jar` precompilado.
 
+## 📋 Criterios cubiertos
+
+- Programación reactiva con WebFlux y R2DBC
+- Unit tests para la capa de servicio
+- Docker para contenerización
+- Terraform como Infrastructure as Code
+- Clean Architecture ligera
+- Buenas prácticas: DTOs, validaciones, excepciones globales y separación de responsabilidades
+
 ## ✅ Plus completados
 
-- Docker
-- Programación reactiva
-- Despliegue en la nube
-- Infraestructura como código
+- Docker para contenerización
+- Programación reactiva con WebFlux
+- Despliegue en la nube (Render)
+- Terraform como Infrastructure as Code
+- Clean Architecture ligera
+- Unit tests con Mockito
+
+## 🔮 Mejoras futuras
+
+- Agregar más casos de uso de lectura (listar franquicias, sucursales, productos)
+- Implementar autenticación y autorización
+- Documentación con Swagger/OpenAPI
+- Filtros y búsqueda en endpoints
